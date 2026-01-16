@@ -8,7 +8,7 @@ import { db } from '../firebase';
 import { doc, onSnapshot, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
-const MADAWA_PHONE = "94766226039"; 
+const MADAWA_PHONE = "94776353353"; 
 const WABOT_INSTANCE = "696103D4D811C";
 const WABOT_TOKEN = "6935797c735a5";
 const TRIPADVISOR_URL = "https://www.tripadvisor.com/Attraction_Review-g297896-d27158137-Reviews-Madawa_Galagedara-Galle_Galle_District_Southern_Province.html";
