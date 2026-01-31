@@ -4,7 +4,7 @@ import SeoHead from './SeoHead';
 import { Star, ArrowRight, ExternalLink, Quote, User, Phone, CheckCircle2, ChevronDown, X, Loader2, Plus, Trash2, Clock, Globe, Ticket, Users, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth } from '../firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, serverTimestamp, query, where, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const MADAWA_PHONE = import.meta.env.VITE_MADAWA_PHONE;
@@ -42,7 +42,18 @@ const GalleFortTour = () => {
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 30);
         window.addEventListener('scroll', handleScroll);
-        const timer = setTimeout(() => setLoading(false), 2000);
+        const timer = setTimeout(() => setLoading(false), 2000); // Keep existing timer
+
+        // Track Visits
+        const trackVisit = async () => {
+            try {
+                await setDoc(doc(db, "admin", "stats"), { visits: increment(1) }, { merge: true });
+            } catch (err) {
+                console.error("Tracking Error:", err);
+            }
+        };
+        trackVisit();
+
         const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             if (currentUser) {

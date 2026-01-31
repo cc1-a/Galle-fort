@@ -46,10 +46,13 @@ const SeoHead = () => {
             "name": "Galle Fort Walking Tour Ticket",
             "price": "12.00",
             "priceCurrency": "USD",
+            "priceValidUntil": "2026-12-31",
             "url": domain,
             "availability": "https://schema.org/InStock",
             "validFrom": "2024-01-01"
-        }
+        },
+        "priceRange": "$12 - $40",
+        "awards": ["TripAdvisor Certificate of Excellence", "Top Rated Guide Galle"]
     };
 
     return (
