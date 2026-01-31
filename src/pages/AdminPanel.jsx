@@ -20,6 +20,18 @@ const AdminPanel = () => {
     else alert("Access Denied");
   };
 
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.status-dropdown-container')) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (!isAuthorized) return;
 
@@ -87,10 +99,10 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-900 selection:bg-cyan-100">
-      {/* Sidebar */}
-      <aside className="w-20 lg:w-72 bg-[#0F172A] text-white fixed h-full flex flex-col items-center lg:items-start p-6 z-50">
-        <div className="mb-12 hidden lg:block">
+    <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-900 selection:bg-cyan-100 pb-24 lg:pb-0">
+      {/* Sidebar (Desktop) */}
+      <aside className="w-72 bg-[#0F172A] text-white fixed h-full hidden lg:flex flex-col items-start p-6 z-50">
+        <div className="mb-12">
           <h2 className="text-2xl font-black tracking-tighter italic">GALLE FORT</h2>
           <h3 className="text-xs font-black uppercase tracking-[0.4em] text-[#0891B2]">Admin Portal</h3>
         </div>
@@ -100,20 +112,38 @@ const AdminPanel = () => {
             { id: 'bookings', icon: Users, label: 'Bookings' },
             { id: 'settings', icon: Wallet, label: 'Pricing' },
           ].map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-[#0891B2] text-white shadow-lg shadow-cyan-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center justify-start gap-4 p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-[#0891B2] text-white shadow-lg shadow-cyan-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
               <item.icon size={24} />
-              <span className="hidden lg:block font-bold text-sm uppercase tracking-wider">{item.label}</span>
+              <span className="font-bold text-sm uppercase tracking-wider">{item.label}</span>
             </button>
           ))}
         </div>
-        <button onClick={() => window.location.reload()} className="mt-auto w-full flex items-center justify-center lg:justify-start gap-4 p-4 text-red-400 hover:bg-red-500/10 rounded-2xl transition-colors">
+        <button onClick={() => window.location.reload()} className="mt-auto w-full flex items-center justify-start gap-4 p-4 text-red-400 hover:bg-red-500/10 rounded-2xl transition-colors">
           <LogOut size={24} />
-          <span className="hidden lg:block font-bold text-sm uppercase tracking-wider">Logout</span>
+          <span className="font-bold text-sm uppercase tracking-wider">Logout</span>
         </button>
       </aside>
 
+      {/* Bottom Nav (Mobile) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0F172A] text-white p-4 z-50 lg:hidden flex justify-around items-center border-t border-white/10 shadow-2xl safe-area-pb">
+        {[
+          { id: 'dashboard', icon: BarChart3, label: 'Overview' },
+          { id: 'bookings', icon: Users, label: 'Bookings' },
+          { id: 'settings', icon: Wallet, label: 'Pricing' },
+        ].map(item => (
+          <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === item.id ? 'text-[#0891B2]' : 'text-slate-500'}`}>
+            <item.icon size={24} strokeWidth={activeTab === item.id ? 3 : 2} />
+            <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+          </button>
+        ))}
+        <button onClick={() => window.location.reload()} className="flex flex-col items-center gap-1 p-2 text-red-500/80">
+          <LogOut size={24} />
+          <span className="text-[9px] font-black uppercase tracking-widest">Exit</span>
+        </button>
+      </nav>
+
       {/* Main Content */}
-      <main className="flex-1 ml-20 lg:ml-72 p-8 lg:p-12 overflow-y-auto w-full">
+      <main className="flex-1 lg:ml-72 p-6 lg:p-12 overflow-y-auto w-full">
         <div className="max-w-6xl mx-auto space-y-12">
 
           {/* Header */}
@@ -211,13 +241,38 @@ const AdminPanel = () => {
 
                           <div className="flex items-center gap-2">
                             {/* Status Actions */}
-                            <div className="relative group/status">
-                              <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-slate-400"><Check size={18} /></button>
-                              <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden hidden group-hover/status:block z-10 p-1">
-                                {['confirmed', 'completed', 'cancelled'].map(s => (
-                                  <button key={s} onClick={() => updateStatus(b.id, s)} className="w-full text-left px-3 py-2 text-[10px] font-black uppercase hover:bg-slate-50 rounded-lg">{s}</button>
-                                ))}
-                              </div>
+                            <div className="relative status-dropdown-container">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(activeDropdown === b.id ? null : b.id);
+                                }}
+                                className={`p-3 rounded-xl transition-all ${activeDropdown === b.id ? 'bg-[#0891B2] text-white shadow-lg' : 'bg-slate-50 hover:bg-slate-100 text-slate-400'}`}
+                              >
+                                <Check size={18} />
+                              </button>
+
+                              <AnimatePresence>
+                                {activeDropdown === b.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-20 p-2"
+                                  >
+                                    {['confirmed', 'completed', 'cancelled'].map(s => (
+                                      <button
+                                        key={s}
+                                        onClick={() => { updateStatus(b.id, s); setActiveDropdown(null); }}
+                                        className="w-full text-left px-4 py-3 text-xs font-black uppercase hover:bg-slate-50 rounded-xl flex items-center justify-between group/item"
+                                      >
+                                        {s}
+                                        {b.status === s && <div className="w-2 h-2 rounded-full bg-[#0891B2]" />}
+                                      </button>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
 
                             <button onClick={() => deleteDoc(doc(db, "bookings", b.id))} className="p-3 bg-red-50 hover:bg-red-500 hover:text-white rounded-xl transition-all text-red-500"><Trash2 size={18} /></button>
