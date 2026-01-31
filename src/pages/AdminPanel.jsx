@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Trash2, Save, LogOut, Calendar, Clock, Phone, User, Users, Search, ChevronDown, CheckCircle, XCircle, AlertCircle, BarChart3, Wallet, Eye, Check } from 'lucide-react';
+import { Trash2, Save, LogOut, Calendar, Clock, Phone, User, Users, Search, ChevronDown, CheckCircle, XCircle, AlertCircle, BarChart3, Wallet, Eye, Check, FileText, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminPanel = () => {
@@ -13,6 +13,9 @@ const AdminPanel = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest"); // newest, oldest, name, price
   const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, bookings, settings
+
+  // New Booking Filter State
+  const [bookingFilter, setBookingFilter] = useState("all"); // all, active, pending, confirmed, completed, cancelled
 
   const handleAuth = (e) => {
     e.preventDefault();
@@ -71,10 +74,20 @@ const AdminPanel = () => {
       b.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Apply Tab/Status Filters
     if (activeTab === 'bookings') {
-      filtered = filtered.filter(b => !['completed', 'cancelled'].includes(b.status));
-    } else if (activeTab === 'history') {
-      filtered = filtered.filter(b => ['completed', 'cancelled'].includes(b.status));
+      if (bookingFilter === 'active') {
+        filtered = filtered.filter(b => ['pending', 'confirmed'].includes(b.status));
+      } else if (bookingFilter === 'pending') {
+        filtered = filtered.filter(b => b.status === 'pending');
+      } else if (bookingFilter === 'confirmed') {
+        filtered = filtered.filter(b => b.status === 'confirmed');
+      } else if (bookingFilter === 'completed') {
+        filtered = filtered.filter(b => b.status === 'completed');
+      } else if (bookingFilter === 'cancelled') {
+        filtered = filtered.filter(b => b.status === 'cancelled');
+      }
+      // 'all' does no filtering beyond search
     }
 
     return filtered.sort((a, b) => {
@@ -121,7 +134,6 @@ const AdminPanel = () => {
           {[
             { id: 'dashboard', icon: BarChart3, label: 'Overview' },
             { id: 'bookings', icon: Users, label: 'Bookings' },
-            { id: 'history', icon: CheckCircle, label: 'History' },
             { id: 'settings', icon: Wallet, label: 'Pricing' },
           ].map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center justify-start gap-4 p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-[#0891B2] text-white shadow-lg shadow-cyan-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -141,7 +153,6 @@ const AdminPanel = () => {
         {[
           { id: 'dashboard', icon: BarChart3, label: 'Overview' },
           { id: 'bookings', icon: Users, label: 'Bookings' },
-          { id: 'history', icon: CheckCircle, label: 'History' },
           { id: 'settings', icon: Wallet, label: 'Pricing' },
         ].map(item => (
           <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === item.id ? 'text-[#0891B2]' : 'text-slate-500'}`}>
@@ -163,7 +174,7 @@ const AdminPanel = () => {
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
             <div>
               <h1 className="text-4xl font-[900] tracking-tighter uppercase mb-2">
-                {activeTab === 'history' ? 'Booking History' : activeTab === 'bookings' ? 'Active Bookings' : activeTab === 'settings' ? 'Settings' : 'Dashboard'}
+                {activeTab === 'bookings' ? 'Booking Management' : activeTab === 'settings' ? 'Settings' : 'Dashboard'}
               </h1>
               <p className="text-slate-400 font-medium">Welcome back, Administrator.</p>
             </div>
@@ -201,10 +212,40 @@ const AdminPanel = () => {
           )}
 
           {/* Bookings Management */}
-          {(activeTab === 'dashboard' || activeTab === 'bookings' || activeTab === 'history') && (
+          {(activeTab === 'dashboard' || activeTab === 'bookings') && (
             <div className="space-y-6">
+
+              {/* Tab Navigation for Bookings */}
+              {activeTab === 'bookings' && (
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {[
+                    { id: 'all', label: 'All Bookings', icon: FileText },
+                    { id: 'active', label: 'Active', icon: Clock },
+                    { id: 'pending', label: 'Pending', icon: AlertCircle },
+                    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle },
+                    { id: 'completed', label: 'Completed', icon: Check },
+                    { id: 'cancelled', label: 'Cancelled', icon: XCircle },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setBookingFilter(tab.id)}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all
+                        ${bookingFilter === tab.id
+                          ? 'bg-[#0F172A] text-white shadow-lg scale-105'
+                          : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100'
+                        }`}
+                    >
+                      <tab.icon size={14} />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 border-b pb-6">
-                <h2 className="text-2xl font-[900] uppercase tracking-tighter">Recent Bookings</h2>
+                <h2 className="text-2xl font-[900] uppercase tracking-tighter">
+                  {activeTab === 'dashboard' ? 'Recent Bookings' : `${bookingFilter} Bookings`}
+                </h2>
                 <div className="flex gap-3 w-full md:w-auto">
                   <div className="relative flex-1 md:w-64">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
@@ -223,7 +264,7 @@ const AdminPanel = () => {
               </div>
 
               <div className="grid gap-4">
-                <AnimatePresence>
+                <AnimatePresence mode='popLayout'>
                   {filteredBookings.map(b => (
                     <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} key={b.id} className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100 group hover:shadow-md transition-shadow">
                       <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
@@ -276,7 +317,7 @@ const AdminPanel = () => {
                                     className="fixed inset-x-4 bottom-24 lg:absolute lg:inset-auto lg:right-0 lg:top-full lg:mt-2 lg:w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] p-2"
                                   >
                                     <div className="lg:hidden text-[10px] font-black uppercase text-slate-400 bg-slate-50 p-2 mb-1 rounded-lg text-center">Update Status for {b.name}</div>
-                                    {['confirmed', 'completed', 'cancelled'].map(s => (
+                                    {['pending', 'confirmed', 'completed', 'cancelled'].map(s => (
                                       <button
                                         key={s}
                                         onClick={() => { updateStatus(b.id, s); setActiveDropdown(null); }}
