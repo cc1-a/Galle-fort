@@ -64,18 +64,29 @@ const AdminPanel = () => {
 
   // Derived Data
   const totalRevenue = bookings.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
-  const filteredBookings = bookings
-    .filter(b =>
+
+  const getFilteredBookings = () => {
+    let filtered = bookings.filter(b =>
       b.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
+    );
+
+    if (activeTab === 'bookings') {
+      filtered = filtered.filter(b => !['completed', 'cancelled'].includes(b.status));
+    } else if (activeTab === 'history') {
+      filtered = filtered.filter(b => ['completed', 'cancelled'].includes(b.status));
+    }
+
+    return filtered.sort((a, b) => {
       if (sortBy === "newest") return b.timestamp - a.timestamp;
       if (sortBy === "oldest") return a.timestamp - b.timestamp;
       if (sortBy === "price") return parseFloat(b.price) - parseFloat(a.price);
       if (sortBy === "name") return a.name?.localeCompare(b.name);
       return 0;
     });
+  };
+
+  const filteredBookings = getFilteredBookings();
 
   const statusColors = {
     'pending': 'bg-amber-100 text-amber-700 border-amber-200',
@@ -110,6 +121,7 @@ const AdminPanel = () => {
           {[
             { id: 'dashboard', icon: BarChart3, label: 'Overview' },
             { id: 'bookings', icon: Users, label: 'Bookings' },
+            { id: 'history', icon: CheckCircle, label: 'History' },
             { id: 'settings', icon: Wallet, label: 'Pricing' },
           ].map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center justify-start gap-4 p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-[#0891B2] text-white shadow-lg shadow-cyan-900/50' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
@@ -129,6 +141,7 @@ const AdminPanel = () => {
         {[
           { id: 'dashboard', icon: BarChart3, label: 'Overview' },
           { id: 'bookings', icon: Users, label: 'Bookings' },
+          { id: 'history', icon: CheckCircle, label: 'History' },
           { id: 'settings', icon: Wallet, label: 'Pricing' },
         ].map(item => (
           <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === item.id ? 'text-[#0891B2]' : 'text-slate-500'}`}>
@@ -149,7 +162,9 @@ const AdminPanel = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
             <div>
-              <h1 className="text-4xl font-[900] tracking-tighter uppercase mb-2">Dashboard</h1>
+              <h1 className="text-4xl font-[900] tracking-tighter uppercase mb-2">
+                {activeTab === 'history' ? 'Booking History' : activeTab === 'bookings' ? 'Active Bookings' : activeTab === 'settings' ? 'Settings' : 'Dashboard'}
+              </h1>
               <p className="text-slate-400 font-medium">Welcome back, Administrator.</p>
             </div>
             <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full shadow-sm border border-slate-100">
@@ -186,7 +201,7 @@ const AdminPanel = () => {
           )}
 
           {/* Bookings Management */}
-          {(activeTab === 'dashboard' || activeTab === 'bookings') && (
+          {(activeTab === 'dashboard' || activeTab === 'bookings' || activeTab === 'history') && (
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 border-b pb-6">
                 <h2 className="text-2xl font-[900] uppercase tracking-tighter">Recent Bookings</h2>
@@ -255,16 +270,17 @@ const AdminPanel = () => {
                               <AnimatePresence>
                                 {activeDropdown === b.id && (
                                   <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-20 p-2"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className="fixed inset-x-4 bottom-24 lg:absolute lg:inset-auto lg:right-0 lg:top-full lg:mt-2 lg:w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] p-2"
                                   >
+                                    <div className="lg:hidden text-[10px] font-black uppercase text-slate-400 bg-slate-50 p-2 mb-1 rounded-lg text-center">Update Status for {b.name}</div>
                                     {['confirmed', 'completed', 'cancelled'].map(s => (
                                       <button
                                         key={s}
                                         onClick={() => { updateStatus(b.id, s); setActiveDropdown(null); }}
-                                        className="w-full text-left px-4 py-3 text-xs font-black uppercase hover:bg-slate-50 rounded-xl flex items-center justify-between group/item"
+                                        className="w-full text-left px-4 py-4 lg:py-3 text-xs font-black uppercase hover:bg-slate-50 rounded-xl flex items-center justify-between group/item"
                                       >
                                         {s}
                                         {b.status === s && <div className="w-2 h-2 rounded-full bg-[#0891B2]" />}
