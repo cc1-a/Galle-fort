@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://galleforttour.com/sitemap.xml
+
+Sitemap: https://gallefortwalkingtour.com/sitemap.xml
