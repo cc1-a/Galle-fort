@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { HelmetProvider } from 'react-helmet-async';
 import GalleFortTour from './components/GalleFortTour';
 import MapPreloader from './components/MapPreloader';
+import AdminPanel from './pages/AdminPanel';
 
-function App() {
+function MainSite() {
   const [isAppLoading, setIsAppLoading] = useState(true);
 
   useEffect(() => {
@@ -16,14 +18,25 @@ function App() {
   }, []);
 
   return (
+    <AnimatePresence mode="wait">
+      {isAppLoading ? (
+        <MapPreloader key="loader" />
+      ) : (
+        <GalleFortTour key="main-site" />
+      )}
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
     <HelmetProvider>
-      <AnimatePresence mode="wait">
-        {isAppLoading ? (
-          <MapPreloader key="loader" />
-        ) : (
-          <GalleFortTour key="main-site" />
-        )}
-      </AnimatePresence>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainSite />} />
+          <Route path="/admin" element={<AdminPanel />} />
+        </Routes>
+      </Router>
     </HelmetProvider>
   );
 }
